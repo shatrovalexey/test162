@@ -19,7 +19,7 @@
 * Выполнить миграции `migration/[1-3].*.sql`
 * Для посева данных можно выполнить миграцию `migration/4.seed.sql`
 * или с помощью `multipart/form-data` передать в `http://127.0.0.1:8000/upload.php`
-* передать файл вроде `data/users.csv`
+* файл вроде `data/users.csv` с именем поля HTML-формы "data"
 
 ### ЗАПУСК
 * `php -S127.0.0.1:8000 -tweb`
