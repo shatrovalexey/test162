@@ -25,7 +25,7 @@ SET
     @`v_count_users` := (SELECT count(*) AS `result` FROM `users` AS `u1`)
     , @`v_count_messages` := (SELECT count(*) AS `result` FROM `messages` AS `m1`);
 
--- найти пользователей, которым необходимо что-то дослать
+-- пользователи, которым необходимо что-то дослать
 DROP TEMPORARY TABLE IF EXISTS `t_users`;
 
 CREATE TEMPORARY TABLE IF NOT EXISTS `t_users`(
@@ -43,7 +43,7 @@ GROUP BY
 HAVING
     (count(DISTINCT `um1`.`id_messages`) < @`v_count_messages`);
 
--- найти сообщения, которые необходимо кому-то дослать
+-- сообщения, которые необходимо кому-то дослать
 DROP TEMPORARY TABLE IF EXISTS `t_messages`;
 
 CREATE TEMPORARY TABLE IF NOT EXISTS `t_messages`(
