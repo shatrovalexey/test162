@@ -14,7 +14,7 @@ foreach ([
 */
 function http_json_response($data, int $code = 200): void
 {
-    http_json_response_code($code);
+    http_response_code($code);
     header('Content-Type: ' . HTTP_CONTENT_TYPE);
 
     echo json_encode(is_scalar($data) ? ['message' => $data,] : $data);
