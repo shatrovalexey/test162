@@ -26,7 +26,7 @@ CREATE TRIGGER `messages_AFTER_INSERT` AFTER INSERT ON `messages` FOR EACH ROW
     INSERT INTO
         `users_messages`
     SET
-        `id_users` := 0
+        `id_users` := (SELECT min(`u1`.`id`) FROM `users` AS `u1`)
         , `id_messages` := new.`id`
         , `created_at` := current_timestamp();
 $$
