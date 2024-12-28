@@ -1,5 +1,7 @@
 DELIMITER $$
 
+-- таблица `messages`
+
 DROP TABLE IF EXISTS `messages`
 $$
 
@@ -12,12 +14,16 @@ SELECT
     , sha1(uuid()) AS `body`;
 $$
 
+-- фиктивный пользователь чтобы упростить поиск неотправленных сообщений
+
 INSERT INTO
     `users`
 SET
     `id` := 0
     , `fullname` := ''
 $$
+
+-- чтобы при создании сообщения отмечалась его отправка фиктивному пользователю
 
 DROP TRIGGER IF EXISTS `messages_AFTER_INSERT`
 $$
