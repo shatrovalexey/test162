@@ -1,4 +1,9 @@
 <?php
+/**
+* настройки подключения к СУБД
+*
+* @return array
+*/
 return [
     'dsn' => 'mysql:dbname=test162'
     , 'user' => 'root'
@@ -6,7 +11,8 @@ return [
     , 'after' => '
 SET
     NAMES utf8
-    , GLOBAL local_infile = true;
+    , GLOBAL local_infile = true
+;
     '
     , 'attrs' => [
         \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,

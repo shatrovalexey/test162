@@ -69,9 +69,13 @@ HAVING
 */
 $sth_sel_users = $dbh->prepare('
 SELECT
-    `tu1`.`id`
+    `u1`.`id`
+    , `u1`.`fullname`
 FROM
-    `t_users` AS `tu1`;
+    `t_users` AS `tu1`
+
+    INNER JOIN `users` AS `u1`
+        ON (`tu1`.`id` = `u1`.`id`);
 ');
 
 /**
@@ -109,15 +113,30 @@ SET
 
 // просмотр всех `users`.`id`, для которых актуальна рассылка
 $sth_sel_users->execute();
-while ($id_users = $sth_sel_users->fetchColumn()) {
+while (list($id_users, $fullname) = $sth_sel_users->fetchColumn()) {
+    $pid_children = [];
 
     // просмотр всех `messages`.*, для которых актуальна рассылка для данного `users`.`id`
     $sth_sel_messages->execute([':id_users' => $id_users,]);
     while (list($id_messages, $title, $body) = $sth_sel_messages->fetch(\PDO::FETCH_NUM)) {
-        // если отправка не прошла
-        if (!$sender($title, $body)) {
+        /**
+        * @var int $pid - PID или результат форка
+        */
+        $pid = pcntl_fork();
+
+        // форк не вышел
+        if ($pid == -1) continue;
+
+        // форк получился
+        if ($pid) {
+            $pid_children[] = $pid;
+
             continue;
         }
+
+        // что происходит внутри потомка процесса
+        // если отправка не прошла
+        if (!$sender($fullname, $title, $body)) exit -1;
 
         // если отправка прошла, то нужно записать
         $sth_ins_messages->execute([
@@ -125,8 +144,19 @@ while ($id_users = $sth_sel_users->fetchColumn()) {
             , ':id_messages' => $id_messages,
         ]);
         $sth_ins_messages->closeCursor();
-    }
 
+        exit;
+    }
     $sth_sel_messages->closeCursor();
+
+    /**
+    * жду завершения всех собранных потомков
+    */
+    while ($pid_children) {
+        /**
+        * перебор всех собранных потомков
+        */
+        foreach ($pid_children as &$pid) if (pcntl_waitpid($pid, $status, \WNOHANG)) unset($pid);
+    }
 }
 $sth_sel_users->closeCursor();
