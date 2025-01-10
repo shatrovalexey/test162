@@ -6,7 +6,7 @@ ob_implicit_flush();
 // Обработка запросов на отправку сообщений и регистрацию в БД
 
 $dbh = require_once('src/db.php');
-$sender = require_once('src/sender.php');
+list($sender,) = require_once('src/sender.php');
 
 // Объявление констант
 
