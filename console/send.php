@@ -11,7 +11,7 @@ $dbh = require_once('src/db.php');
 /**
 * @var \Closure $sender - приспособление для отправки сообщений
 */
-$sender = require_once('src/sender.php');
+list(, $sender) = require_once('src/sender.php');
 
 /**
 * Можно было бы сразу и, кажется, просто выбрать все записи за счёт умножения мощностей сущностей общей сущности для выборки.
@@ -70,12 +70,8 @@ HAVING
 $sth_sel_users = $dbh->prepare('
 SELECT
     `u1`.`id`
-    , `u1`.`fullname`
 FROM
-    `t_users` AS `tu1`
-
-    INNER JOIN `users` AS `u1`
-        ON (`tu1`.`id` = `u1`.`id`);
+    `t_users` AS `tu1`;
 ');
 
 /**
@@ -83,14 +79,9 @@ FROM
 */
 $sth_sel_messages = $dbh->prepare('
 SELECT
-    `m1`.`id`
-    , `m1`.`title`
-    , `m1`.`body`
+    `tm1`.`id`
 FROM
     `t_messages` AS `tm1`
-
-        INNER JOIN `messages` AS `m1`
-            ON (`m1`.`id` = `tm1`.`id`)
 
         LEFT OUTER JOIN `users_messages` AS `um1`
             ON (`um1`.`id_messages` = `tm1`.`id`)
@@ -100,25 +91,14 @@ WHERE
 LIMIT 1;
 ');
 
-/**
-* @var \PDOStatement $sth_ins_messages - заполнение `users_messages`
-*/
-$sth_ins_messages = $dbh->prepare('
-INSERT IGNORE INTO
-    `users_messages`
-SET
-    `id_users` := :id_users
-    , `id_messages` := :id_messages;
-');
-
 // просмотр всех `users`.`id`, для которых актуальна рассылка
 $sth_sel_users->execute();
-while (list($id_users, $fullname) = $sth_sel_users->fetchColumn()) {
+while ($id_users = $sth_sel_users->fetchColumn()) {
     $pid_children = [];
 
     // просмотр всех `messages`.*, для которых актуальна рассылка для данного `users`.`id`
     $sth_sel_messages->execute([':id_users' => $id_users,]);
-    while (list($id_messages, $title, $body) = $sth_sel_messages->fetch(\PDO::FETCH_NUM)) {
+    while ($id_messages = $sth_sel_messages->fetchColumn()) {
         /**
         * @var int $pid - PID или результат форка
         */
@@ -136,27 +116,15 @@ while (list($id_users, $fullname) = $sth_sel_users->fetchColumn()) {
 
         // что происходит внутри потомка процесса
         // если отправка не прошла
-        if (!$sender($fullname, $title, $body)) exit -1;
-
-        // если отправка прошла, то нужно записать
-        $sth_ins_messages->execute([
-            ':id_users' => $id_users
-            , ':id_messages' => $id_messages,
-        ]);
-        $sth_ins_messages->closeCursor();
-
-        exit;
+        exit($sender([':id_users' => $id_users, ':id_messages' => $id_messages,]) ? 0 : -1);
     }
     $sth_sel_messages->closeCursor();
 
     /**
     * жду завершения всех собранных потомков
     */
-    while ($pid_children) {
-        /**
-        * перебор всех собранных потомков
-        */
-        foreach ($pid_children as &$pid) if (pcntl_waitpid($pid, $status, \WNOHANG)) unset($pid);
-    }
+    while ($pid_children) foreach ($pid_children as &$pid)
+        if (pcntl_waitpid($pid, $status, \WNOHANG))
+            unset($pid);
 }
 $sth_sel_users->closeCursor();
