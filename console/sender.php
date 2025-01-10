@@ -6,7 +6,7 @@ ob_implicit_flush();
 // Обработка запросов на отправку сообщений и регистрацию в БД
 
 $dbh = require_once('src/db.php');
-list($sender,) = require_once('src/sender.php');
+list($send,) = require_once('src/sender.php');
 
 // Объявление констант
 
@@ -96,7 +96,7 @@ do {
 
         // запуск отправки сообщения
         $sth_sel->execute([':id_users' => $query['id_users'], ':id_messages' => $id_messages,]);
-        $sender(... $sth_sel->fetch(\PDO::FETCH_NUM));
+        $send(... $sth_sel->fetch(\PDO::FETCH_NUM));
         $sth_sel->closeCursor();
 
         break;
