@@ -14,6 +14,7 @@
 
 ### ЗАПУСК
 * `php -S127.0.0.1:8000 -tweb`
+* `php console/sender.php`
 * Добавить в `crontab -e` директиву для запуска `console/send.php`
 
 ### АВТОР
